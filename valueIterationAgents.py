@@ -63,16 +63,9 @@ class ValueIterationAgent(ValueEstimationAgent):
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
         for i in range(self.iterations):
-            newValues = self.values.copy() # it is fetched every state (not whole table) ... so make a temp Value to create the table we doing
+            values = self.values.copy() # it is fetched every state (not whole table) ... so make a temp Value to create the table we doing
             for state in self.mdp.getStates():
-                temp = self.computeActionFromValues(state)
-                newValues[state] = -float('inf')
-                if temp != None:
-                    newValues[state] = max(newValues[state], temp)
-                else:
-                    newValues[state] = 0.0
-            self.values = newValues
-
+                self.values[state] = float(self.computeActionFromValues2(state, values))
 
     def getValue(self, state):
         """
@@ -90,7 +83,6 @@ class ValueIterationAgent(ValueEstimationAgent):
         value = 0
         for nextState, prob in self.mdp.getTransitionStatesAndProbs(state, action):
             value += prob * (self.mdp.getReward(state, action, nextState) + self.discount * self.values[nextState])
-
         return value
         util.raiseNotDefined()
 
@@ -104,17 +96,50 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
+
         if self.mdp.isTerminal(state):
             return None
 
-        possibleActions = self.mdp.getPossibleActions(state)
-        
-        value = -float('inf')
-        for action in possibleActions:
-            value = max(value, self.computeQValueFromValues(state, action))
+        value, saveAction = -float('inf'), None
+        for action in self.mdp.getPossibleActions(state):
+            temp = self.computeQValueFromValues(state, action)
+            if value < temp:
+                value, saveAction = temp, action
 
+        return saveAction
+        util.raiseNotDefined()
+
+    def computeQValueFromValues2(self, state, action, values):
+        """
+          Compute the Q-value of action in state from the
+          value function stored in self.values.
+        """
+        "*** YOUR CODE HERE ***"
+        value = 0
+        for nextState, prob in self.mdp.getTransitionStatesAndProbs(state, action):
+            value += prob * (self.mdp.getReward(state, action, nextState) + self.discount * values[nextState])
         return value
         util.raiseNotDefined()
+
+    def computeActionFromValues2(self, state, values):
+        """
+          The policy is the best action in the given state
+          according to the values currently stored in self.values.
+
+          You may break ties any way you see fit.  Note that if
+          there are no legal actions, which is the case at the
+          terminal state, you should return None.
+        """
+        "*** YOUR CODE HERE ***"
+        #self.values[state] = -float('inf')
+        tempvalue = -float('inf')
+        for action in self.mdp.getPossibleActions(state):
+            temp = self.computeQValueFromValues2(state, action, values)
+            tempvalue = max(tempvalue, temp)
+        if tempvalue == -float('inf'):
+            tempvalue = 0.0
+        return float(tempvalue)
+
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
