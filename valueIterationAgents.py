@@ -123,15 +123,8 @@ class ValueIterationAgent(ValueEstimationAgent):
 
     def computeValueFromQValues(self, state, values):
         """
-          The policy is the best action in the given state
-          according to the values currently stored in self.values.
-
-          You may break ties any way you see fit.  Note that if
-          there are no legal actions, which is the case at the
-          terminal state, you should return None.
+        Return max Q Value
         """
-        "*** YOUR CODE HERE ***"
-        
         #self.values[state] = -float('inf')
         tempvalue = -float('inf')
 
@@ -141,7 +134,6 @@ class ValueIterationAgent(ValueEstimationAgent):
         if tempvalue == -float('inf'):
             tempvalue = 0.0
         return float(tempvalue)
-
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
@@ -208,6 +200,43 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
         self.theta = theta
         ValueIterationAgent.__init__(self, mdp, discount, iterations)
 
+    def getNextStates(self, state, predecessors):
+        actions = self.mdp.getPossibleActions(state)
+        for action in actions:
+            nextStates = self.mdp.getTransitionStatesAndProbs(state, action)
+            for nextState, prob in nextStates:
+                if prob > 0:
+                    predecessors[nextState].append(state)
+
+    def predecessorsOfAllStates(self, states):
+        predecessors = util.Counter()
+        for state in states: 
+            predecessors[state] = list()
+        for state in states:
+            self.getNextStates(state, predecessors)
+        return predecessors
+    
+    def buildPriorityQueue(self, states):
+        q = util.PriorityQueue()
+        for state in states:
+            diff = abs(self.values[state] - self.computeValueFromQValues(state, self.values))
+            q.push(state, -diff)
+
+        return q
+
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
+        states = self.mdp.getStates()
+        predecessors = self.predecessorsOfAllStates(states)
         
+        q = self.buildPriorityQueue(states)
+        
+        for i in range(self.iterations):
+            if q.isEmpty():
+                return
+            state = q.pop()
+            self.values[state] = self.computeValueFromQValues(state, self.values)
+            for p in predecessors[state]:
+                diff = abs(self.values[p] - self.computeValueFromQValues(p, self.values))
+                if diff > self.theta:
+                    q.update(p, -diff)
