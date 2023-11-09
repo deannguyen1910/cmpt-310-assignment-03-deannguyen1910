@@ -236,7 +236,7 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
                 return
             state = q.pop()
             self.values[state] = self.computeValueFromQValues(state, self.values)
-            for p in predecessors[state]:
-                diff = abs(self.values[p] - self.computeValueFromQValues(p, self.values))
+            for predecessor in predecessors[state]:
+                diff = abs(self.values[predecessor] - self.computeValueFromQValues(predecessor, self.values))
                 if diff > self.theta:
-                    q.update(p, -diff)
+                    q.update(predecessor, -diff)
