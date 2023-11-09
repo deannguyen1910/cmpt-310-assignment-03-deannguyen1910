@@ -218,7 +218,8 @@ class ApproximateQAgent(PacmanQAgent):
         maxQValueOfnextStatenextAction = self.computeValueFromQValues(nextState)
         currentQValue = self.getQValue(state, action)
         for feature in featureVector:
-            w[feature] += self.alpha * (reward + self.discount * maxQValueOfnextStatenextAction - currentQValue) / featureVector[feature]
+            if (featureVector[feature] != 0.0):
+              w[feature] += self.alpha * (reward + self.discount * maxQValueOfnextStatenextAction - currentQValue) * featureVector[feature]
         #util.raiseNotDefined()
 
     def final(self, state):
